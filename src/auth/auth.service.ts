@@ -74,32 +74,45 @@ export class AuthService {
     };
   }
   async register(dto: CreateAuthDto) {
-    const { email, password, fullName } = dto;
+  const { email, password, fullName } = dto;
 
-    // Validar si el usuario ya existe
-    const existingUser = await this.userModel.findOne({ email });
-    if (existingUser) {
-      throw new BadRequestException('El correo ya está registrado');
-    }
+  // Validar si el usuario ya existe
+  const existingUser = await this.userModel.findOne({ email });
+  if (existingUser) {
+    throw new BadRequestException('El correo ya está registrado');
+  }
 
-    // Hashear la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // Hashear la contraseña
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear nuevo usuario
-    const newUser = new this.userModel({
-      email,
-      password: hashedPassword,
-      fullName,
-      isActive: true,
-      roles: ['user'],
-    });
+  // Crear nuevo usuario
+  const newUser = new this.userModel({
+    email,
+    password: hashedPassword,
+    fullName,
+    isActive: true,
+    roles: ['user'],
+  });
 
-    await newUser.save();
+  await newUser.save();
 
-    return {
-      message: 'Usuario registrado correctamente',
+  // Generar token JWT
+  const payload = {
+    sub: newUser._id,
+    email: newUser.email,
+    roles: newUser.roles,
+  };
+
+  const token = this.jwtService.sign(payload);
+
+  return {
+    message: 'Usuario registrado correctamente',
+    token,
+    user: {
       email: newUser.email,
       fullName: newUser.fullName,
-    };
-  }
+      roles: newUser.roles,
+    },
+  };
+}
 }

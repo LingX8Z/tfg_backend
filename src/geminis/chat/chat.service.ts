@@ -4,7 +4,7 @@ import { ChatHistoryService } from 'src/chathistory/chathistory.service';
 
 @Injectable()
 export class ChatService {
-  private readonly GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+  private readonly GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent`;
 
   constructor(private readonly chatHistoryService: ChatHistoryService) {}
 
@@ -45,7 +45,7 @@ export class ChatService {
       return botResponse;
     } catch (error) {
       console.error('Error al llamar a Gemini:', error?.response?.data || error.message);
-      return '❌ Error al contactar con Gemini API';
+      return ' Error al contactar con Gemini API';
     }
   }
 }

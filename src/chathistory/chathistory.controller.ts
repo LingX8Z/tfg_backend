@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Request, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Request,
+  UseGuards,
+  Get,
+  Param,
+} from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwtAuthGuard/jwt-guard';
 import { ChatHistoryService } from './chathistory.service';
 
@@ -7,21 +15,35 @@ export class ChatHistoryController {
   constructor(private readonly chatHistoryService: ChatHistoryService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post('save')
-  async saveMessage(
-    @Body() body: { message: string; isUserMessage: boolean; chatbotName: string },  // Añadimos chatbotName al cuerpo de la solicitud
-    @Request() req
+  @Post('new')
+  createConversation(
+    @Request() req,
+    @Body() body: { chatbotName: string; title: string },
   ) {
-    console.log('User ID from JWT:', req.user.userId);  // Verifica si el userId está presente
-    const userId = req.user.userId;  // Asegúrate de que este valor esté correctamente extraído
+    return this.chatHistoryService.createConversation(
+      req.user.userId,
+      body.chatbotName,
+      body.title,
+    );
+  }
 
-    // Verifica que el chatbotName sea uno de los valores válidos
-    const validChatbots = ['llama3', 'geminis', 'RAG'];
-    if (!validChatbots.includes(body.chatbotName)) {
-      throw new BadRequestException('Invalid chatbotName value');
-    }
-
-    // Guarda el mensaje con el chatbotName
-    return this.chatHistoryService.saveMessage(userId, body.message, body.isUserMessage, body.chatbotName);
+  @UseGuards(JwtAuthGuard)
+  @Post('add-message')
+  addMsg(
+    @Body() body: { historyId: string; sender: 'user' | 'bot'; text: string },
+  ) {
+    return this.chatHistoryService.addMessage(body.historyId, {
+      sender: body.sender,
+      text: body.text,
+    });
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Get(':chatbotName')
+  getHistories(@Request() req, @Param('chatbotName') chatbotName: string) {
+    return this.chatHistoryService.getConversations(
+      req.user.userId,
+      chatbotName,
+    );
   }
 }
