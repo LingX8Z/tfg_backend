@@ -54,27 +54,32 @@ export class ChatHistoryService {
       .exec();
   }
 
-  async saveMessage(
-    userId: string,
-    message: string,
-    isUserMessage: boolean,
-    chatbotName: string,
-  ): Promise<void> {
-    const lastConversation = await this.chatHistoryModel
-      .findOne({ userId, chatbotName })
-      .sort({ updatedAt: -1 });
+async saveMessage(
+  userId: string,
+  message: string,
+  isUserMessage: boolean,
+  chatbotName: string,
+): Promise<void> {
+  let lastConversation = await this.chatHistoryModel
+    .findOne({ userId, chatbotName })
+    .sort({ updatedAt: -1 });
 
-    if (!lastConversation) {
-      throw new NotFoundException(
-        'No hay conversación activa para guardar el mensaje',
-      );
-    }
-
-    lastConversation.messages.push({
-      sender: isUserMessage ? 'user' : 'bot',
-      text: message,
+  if (!lastConversation) {
+    // Crea conversación por defecto si no existe
+    lastConversation = new this.chatHistoryModel({
+      userId,
+      chatbotName,
+      title: 'Conversación 1',
+      messages: [],
     });
-
-    await lastConversation.save();
   }
+
+  lastConversation.messages.push({
+    sender: isUserMessage ? 'user' : 'bot',
+    text: message,
+  });
+
+  await lastConversation.save();
+}
+
 }

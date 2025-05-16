@@ -9,43 +9,57 @@ export class ChatService {
   constructor(private readonly chatHistoryService: ChatHistoryService) {}
 
   async getGeminiResponse(prompt: string, userId: string, chatbotName: string): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;  // Asegúrate de que la clave API esté en el archivo .env o en el entorno
+  const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-      throw new Error('API Key is missing');
-    }
+  if (!apiKey) {
+    throw new Error('API Key is missing');
+  }
 
-    try {
-      const response = await axios.post(
-        `${this.GEMINI_URL}?key=${apiKey}`,  // Agrega la clave API en la URL de la solicitud
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Eres un fisioterapeuta profesional. Solo debes responder preguntas relacionadas con fisioterapia, salud muscular, ejercicios terapéuticos, rehabilitación y cuidado físico. No respondas temas médicos generales ni psicológicos y si te preguntan de otro tema que no sea las indicadas responde con un "Solo estoy especializado en fisio".\n\nUsuario: ${prompt}`
-                }
-              ]
-            }
-          ]
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
+  try {
+    const response = await axios.post(
+      `${this.GEMINI_URL}?key=${apiKey}`,
+      {
+        contents: [
+          {
+            parts: [
+              {
+                text: `Eres un fisioterapeuta profesional. Solo debes responder preguntas relacionadas con fisioterapia, salud muscular, ejercicios terapéuticos, rehabilitación y cuidado físico. No respondas temas médicos generales ni psicológicos y si te preguntan de otro tema que no sea las indicadas responde con un "Solo estoy especializado en fisio".\n\n${prompt}`
+              }
+            ]
           }
+        ]
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
         }
-      );
+      }
+    );
 
-      const botResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sin respuesta.';
-      
-      // Guarda el mensaje del usuario y la respuesta del bot en el historial
-      await this.chatHistoryService.saveMessage(userId, prompt, true, chatbotName);  // Guardamos el mensaje del usuario
-      await this.chatHistoryService.saveMessage(userId, botResponse, false, chatbotName);  // Guardamos la respuesta del bot
+    const botResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sin respuesta.';
+    return botResponse;
+  } catch (error) {
+    console.error('Error al llamar a Gemini:', error?.response?.data || error.message);
+    return ' Error al contactar con Gemini API';
+  }
+}
 
-      return botResponse;
-    } catch (error) {
-      console.error('Error al llamar a Gemini:', error?.response?.data || error.message);
-      return ' Error al contactar con Gemini API';
+
+  async saveStructuredMessages(userId: string, fullText: string, chatbotName: string) {
+  const lines = fullText.split('\n');
+  for (const line of lines) {
+    if (line.trim().startsWith('Usuario:')) {
+      const msg = line.replace('Usuario:', '').trim();
+      if (msg) {
+        await this.chatHistoryService.saveMessage(userId, msg, true, chatbotName);
+      }
+    } else if (line.trim().startsWith('IA:')) {
+      const msg = line.replace('IA:', '').trim();
+      if (msg) {
+        await this.chatHistoryService.saveMessage(userId, msg, false, chatbotName);
+      }
     }
   }
+}
+
 }

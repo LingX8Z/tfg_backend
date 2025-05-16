@@ -36,11 +36,19 @@ export class ChatController {
 
     // Enviar el prompt junto con el historial a Gemini
     const response = await this.chatService.getGeminiResponse(
-      fullPrompt,
-      userId,
-      chatbotName,
-    );
+  fullPrompt,
+  userId,
+  chatbotName,
+);
 
-    return { response };
+// Guardar los mensajes por separado
+await this.chatService.saveStructuredMessages(
+  userId,
+  `Usuario: ${prompt}\nIA: ${response}`,
+  chatbotName,
+);
+
+return { response };
+
   }
 }
