@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -11,12 +12,13 @@ import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument } from './entities/user.entity';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
+import { UpdateUserDto } from './dto/update-auth.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   // Método para obtener todos los usuarios
@@ -25,7 +27,9 @@ export class AuthService {
   }
 
   async create(createAuthDto: CreateAuthDto) {
-    const userExists = await this.userModel.findOne({ email: createAuthDto.email });
+    const userExists = await this.userModel.findOne({
+      email: createAuthDto.email,
+    });
     if (userExists) {
       throw new BadRequestException('El email ya está registrado');
     }
@@ -34,7 +38,7 @@ export class AuthService {
     const newUser = new this.userModel({
       ...createAuthDto,
       password: hashedPassword,
-      roles: ['user'],
+      roles: 'user',
     });
 
     await newUser.save();
@@ -74,44 +78,80 @@ export class AuthService {
     };
   }
   async register(dto: CreateAuthDto) {
-  const { email, password, fullName } = dto;
+    const { email, password, fullName } = dto;
 
-  // Validar si el usuario ya existe
-  const existingUser = await this.userModel.findOne({ email });
-  if (existingUser) {
-    throw new BadRequestException('El correo ya está registrado');
+    // Validar si el usuario ya existe
+    const existingUser = await this.userModel.findOne({ email });
+    if (existingUser) {
+      throw new BadRequestException('El correo ya está registrado');
+    }
+
+    // Hashear la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Crear nuevo usuario
+    const newUser = new this.userModel({
+      email,
+      password: hashedPassword,
+      fullName,
+      isActive: true,
+      roles: 'user',
+    });
+
+    await newUser.save();
+
+    // Generar token JWT
+    const payload = {
+      sub: newUser._id,
+      email: newUser.email,
+      roles: newUser.roles,
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Usuario registrado correctamente',
+      token,
+      user: {
+        email: newUser.email,
+        fullName: newUser.fullName,
+        roles: newUser.roles,
+      },
+    };
   }
 
-  // Hashear la contraseña
-  const hashedPassword = await bcrypt.hash(password, 10);
+  async updateUser(userId: string, body: UpdateUserDto) {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
 
-  // Crear nuevo usuario
-  const newUser = new this.userModel({
-    email,
-    password: hashedPassword,
-    fullName,
-    isActive: true,
-    roles: ['user'],
-  });
+  if (body.fullName) {
+    user.fullName = body.fullName;
+  }
 
-  await newUser.save();
+  if (body.newPassword) {
+    if (!body.currentPassword) {
+      throw new BadRequestException('Debes proporcionar la contraseña actual');
+    }
+    const passwordMatches = await bcrypt.compare(
+      body.currentPassword,
+      user.password,
+    );
+    if (!passwordMatches) {
+      throw new UnauthorizedException('La contraseña actual no es válida');
+    }
+    user.password = await bcrypt.hash(body.newPassword, 10);
+  }
 
-  // Generar token JWT
-  const payload = {
-    sub: newUser._id,
-    email: newUser.email,
-    roles: newUser.roles,
-  };
-
-  const token = this.jwtService.sign(payload);
+  await user.save();
 
   return {
-    message: 'Usuario registrado correctamente',
-    token,
+    message: 'Datos actualizados correctamente',
     user: {
-      email: newUser.email,
-      fullName: newUser.fullName,
-      roles: newUser.roles,
+      email: user.email,
+      fullName: user.fullName,
+      roles: user.roles,
     },
   };
 }

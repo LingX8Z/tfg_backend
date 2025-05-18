@@ -33,7 +33,11 @@ export class ChatHistoryService {
       throw new NotFoundException('Conversación no encontrada');
     }
 
-    conversation.messages.push(message);
+    conversation.messages.push({
+      ...message,
+      timestamp: new Date(), // ✅ añadimos timestamp
+    });
+
     return conversation.save();
   }
 
@@ -54,32 +58,52 @@ export class ChatHistoryService {
       .exec();
   }
 
-async saveMessage(
-  userId: string,
-  message: string,
-  isUserMessage: boolean,
-  chatbotName: string,
-): Promise<void> {
-  let lastConversation = await this.chatHistoryModel
-    .findOne({ userId, chatbotName })
-    .sort({ updatedAt: -1 });
+  async saveMessage(
+    userId: string,
+    message: string,
+    isUserMessage: boolean,
+    chatbotName: string,
+  ): Promise<void> {
+    let lastConversation = await this.chatHistoryModel
+      .findOne({ userId, chatbotName })
+      .sort({ updatedAt: -1 });
 
-  if (!lastConversation) {
-    // Crea conversación por defecto si no existe
-    lastConversation = new this.chatHistoryModel({
-      userId,
-      chatbotName,
-      title: 'Conversación 1',
-      messages: [],
+    if (!lastConversation) {
+      lastConversation = new this.chatHistoryModel({
+        userId,
+        chatbotName,
+        title: 'Conversación 1',
+        messages: [],
+      });
+    }
+
+    lastConversation.messages.push({
+      sender: isUserMessage ? 'user' : 'bot',
+      text: message,
+      timestamp: new Date(), // ✅ añadimos timestamp también aquí
     });
+
+    await lastConversation.save();
   }
 
-  lastConversation.messages.push({
-    sender: isUserMessage ? 'user' : 'bot',
-    text: message,
-  });
+  async renameConversation(id: string, newTitle: string): Promise<ChatHistory> {
+  const updated = await this.chatHistoryModel.findByIdAndUpdate(
+    id,
+    { title: newTitle },
+    { new: true },
+  );
 
-  await lastConversation.save();
+  if (!updated) {
+    throw new NotFoundException('Conversación no encontrada');
+  }
+
+  return updated;
 }
 
+
+  async deleteConversation(id: string): Promise<void> {
+    await this.chatHistoryModel.findByIdAndDelete(id);
+  }
+
+  
 }

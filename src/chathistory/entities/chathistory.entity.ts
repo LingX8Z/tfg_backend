@@ -18,12 +18,14 @@ export class ChatHistory {
     type: [
       {
         sender: { type: String, enum: ['user', 'bot'], required: true },
-        text: { type: String, required: true }
+        text: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now } // ✅ aquí añadimos la marca de tiempo
       }
     ],
     default: []
   })
-  messages: { sender: 'user' | 'bot'; text: string }[];
+  messages: { sender: 'user' | 'bot'; text: string; timestamp: Date }[];
 }
+
 
 export const ChatHistorySchema = SchemaFactory.createForClass(ChatHistory);

@@ -6,6 +6,8 @@ import {
   UseGuards,
   Get,
   Param,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwtAuthGuard/jwt-guard';
 import { ChatHistoryService } from './chathistory.service';
@@ -37,7 +39,7 @@ export class ChatHistoryController {
       text: body.text,
     });
   }
-  
+
   @UseGuards(JwtAuthGuard)
   @Get(':chatbotName')
   getHistories(@Request() req, @Param('chatbotName') chatbotName: string) {
@@ -45,5 +47,15 @@ export class ChatHistoryController {
       req.user.userId,
       chatbotName,
     );
+  }
+
+  @Patch(':id/rename')
+  renameConversation(@Param('id') id: string, @Body() body: { title: string }) {
+    return this.chatHistoryService.renameConversation(id, body.title);
+  }
+
+  @Delete(':id')
+  deleteConversation(@Param('id') id: string) {
+    return this.chatHistoryService.deleteConversation(id);
   }
 }

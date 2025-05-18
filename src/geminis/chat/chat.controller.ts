@@ -41,12 +41,6 @@ export class ChatController {
   chatbotName,
 );
 
-// Guardar los mensajes por separado
-await this.chatService.saveStructuredMessages(
-  userId,
-  `Usuario: ${prompt}\nIA: ${response}`,
-  chatbotName,
-);
 
 return { response };
 

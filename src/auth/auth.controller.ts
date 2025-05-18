@@ -1,20 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { JwtAuthGuard } from './jwtAuthGuard/jwt-guard';
+import { UpdateUserDto } from './dto/update-auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
 
   @Get('users')
   async getAllUsers() {
     return this.authService.getAllUsers();
   }
 
-  
   @Post()
   create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.create(createAuthDto);
@@ -34,5 +43,10 @@ export class AuthController {
   @Get('check')
   checkToken() {
     return { valid: true }; // Si llega aquí, el token es válido
+  }
+  @UseGuards(JwtAuthGuard)
+  @Patch('update')
+  async updateUser(@Request() req, @Body() body: UpdateUserDto) {
+    return this.authService.updateUser(req.user.userId, body);
   }
 }
