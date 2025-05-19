@@ -19,7 +19,7 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Método para obtener todos los usuarios
   async getAllUsers(): Promise<User[]> {
@@ -121,38 +121,71 @@ export class AuthService {
   }
 
   async updateUser(userId: string, body: UpdateUserDto) {
-  const user = await this.userModel.findById(userId);
-  if (!user) {
-    throw new NotFoundException('Usuario no encontrado');
-  }
-
-  if (body.fullName) {
-    user.fullName = body.fullName;
-  }
-
-  if (body.newPassword) {
-    if (!body.currentPassword) {
-      throw new BadRequestException('Debes proporcionar la contraseña actual');
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
     }
-    const passwordMatches = await bcrypt.compare(
-      body.currentPassword,
-      user.password,
-    );
-    if (!passwordMatches) {
-      throw new UnauthorizedException('La contraseña actual no es válida');
+
+    if (body.fullName) {
+      user.fullName = body.fullName;
     }
-    user.password = await bcrypt.hash(body.newPassword, 10);
+
+    if (body.newPassword) {
+      if (!body.currentPassword) {
+        throw new BadRequestException('Debes proporcionar la contraseña actual');
+      }
+      const passwordMatches = await bcrypt.compare(
+        body.currentPassword,
+        user.password,
+      );
+      if (!passwordMatches) {
+        throw new UnauthorizedException('La contraseña actual no es válida');
+      }
+      user.password = await bcrypt.hash(body.newPassword, 10);
+    }
+
+    await user.save();
+
+    return {
+      message: 'Datos actualizados correctamente',
+      user: {
+        email: user.email,
+        fullName: user.fullName,
+        roles: user.roles,
+      },
+    };
   }
 
-  await user.save();
+  async updateUserDetails(userId: string, updates: { fullName?: string; roles?: string }) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
 
-  return {
-    message: 'Datos actualizados correctamente',
-    user: {
-      email: user.email,
-      fullName: user.fullName,
-      roles: user.roles,
-    },
-  };
-}
+    if (updates.fullName) {
+      user.fullName = updates.fullName;
+    }
+
+    if (updates.roles) {
+      user.roles = updates.roles;
+    }
+
+    await user.save();
+    return {
+      message: 'Usuario actualizado',
+      user: {
+        _id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        roles: user.roles,
+      },
+    };
+  }
+
+
+  async deleteUser(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    await this.userModel.findByIdAndDelete(userId);
+    return { message: 'Usuario eliminado' };
+  }
+
 }

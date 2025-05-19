@@ -17,7 +17,7 @@ import { UpdateUserDto } from './dto/update-auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Get('users')
   async getAllUsers() {
@@ -49,4 +49,19 @@ export class AuthController {
   async updateUser(@Request() req, @Body() body: UpdateUserDto) {
     return this.authService.updateUser(req.user.userId, body);
   }
+
+  // auth.controller.ts
+  @UseGuards(JwtAuthGuard)
+  @Patch('users/:id')
+  updateUserAdmin(@Param('id') id: string, @Body() body: { fullName?: string; roles?: string }) {
+    return this.authService.updateUserDetails(id, body);
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.authService.deleteUser(id);
+  }
+
 }
