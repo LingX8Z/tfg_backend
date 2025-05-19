@@ -38,7 +38,7 @@ export class AuthService {
     const newUser = new this.userModel({
       ...createAuthDto,
       password: hashedPassword,
-      roles: 'user',
+      roles: 'User',
     });
 
     await newUser.save();
@@ -95,7 +95,7 @@ export class AuthService {
       password: hashedPassword,
       fullName,
       isActive: true,
-      roles: 'user',
+      roles: 'User',
     });
 
     await newUser.save();
