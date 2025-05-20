@@ -180,6 +180,11 @@ export class AuthService {
     };
   }
 
+  async updateUserRole(userId: string, newRole: string) {
+  return this.userModel.findByIdAndUpdate(userId, { roles: newRole }, { new: true });
+}
+
+
 
   async deleteUser(userId: string) {
     const user = await this.userModel.findById(userId);

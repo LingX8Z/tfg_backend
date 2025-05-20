@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -55,6 +56,22 @@ export class AuthController {
   @Patch('users/:id')
   updateUserAdmin(@Param('id') id: string, @Body() body: { fullName?: string; roles?: string }) {
     return this.authService.updateUserDetails(id, body);
+  }
+
+  // users.controller.ts
+  @UseGuards(JwtAuthGuard)
+  @Patch('upgrade-to-premium')
+  async upgradeToPremium(@Req() req) {
+    const updatedUser = await this.authService.updateUserRole(req.user.userId, 'Premium');
+    return { user: updatedUser };
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('cancel-subscription')
+  async cancelSubscription(@Req() req) {
+    const updatedUser = await this.authService.updateUserRole(req.user.userId, 'User');
+    return { user: updatedUser };
   }
 
 
