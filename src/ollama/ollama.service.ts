@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { CreateOllamaDto } from './dto/create-ollama.dto';
+import { ChatHistoryService } from 'src/chathistory/chathistory.service';
 
 @Injectable()
 export class OllamaService {
-  constructor(private readonly http: HttpService) {}
+  constructor(private readonly http: HttpService , private readonly chatHistoryService: ChatHistoryService) {}
 
-  async generateResponse(createOllamaDto: CreateOllamaDto): Promise<string> {
+  async generateResponse(createOllamaDto: CreateOllamaDto ): Promise<string> {
     const payload = {
       model: 'llama3',
       prompt: `
@@ -25,4 +26,5 @@ export class OllamaService {
     return res.data.response;
   }
   
+
 }
