@@ -20,6 +20,12 @@ import { UpdateUserDto } from './dto/update-auth.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getProfile(@Request() req) {
+    return req.user;
+  }
+
   @Get('users')
   async getAllUsers() {
     return this.authService.getAllUsers();

@@ -62,9 +62,9 @@ export class AuthService {
     const payload = {
       sub: user._id,
       email: user.email,
+      fullName: user.fullName,
       roles: user.roles,
     };
-
     const token = this.jwtService.sign(payload);
 
     return {
@@ -181,8 +181,8 @@ export class AuthService {
   }
 
   async updateUserRole(userId: string, newRole: string) {
-  return this.userModel.findByIdAndUpdate(userId, { roles: newRole }, { new: true });
-}
+    return this.userModel.findByIdAndUpdate(userId, { roles: newRole }, { new: true });
+  }
 
 
 
