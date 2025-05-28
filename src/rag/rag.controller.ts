@@ -5,16 +5,27 @@ import {
   UploadedFiles,
   UseInterceptors,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { RagService } from './rag.service';
 import { extname } from 'path';
+import { JwtAuthGuard } from 'src/auth/jwtAuthGuard/jwt-guard';
+
 
 @Controller('rag')
 export class RagController {
   constructor(private readonly ragService: RagService) {}
 
+@UseGuards(JwtAuthGuard)
+@Post('ask')
+async askFromAllPDFs(@Body('prompt') prompt: string) {
+  const response = await this.ragService.getGeminiRagResponse(prompt);
+  return { response };
+}
+
+@UseGuards(JwtAuthGuard)
 @Post('upload-and-ask')
 @UseInterceptors(
   FilesInterceptor('pdfs', 5, {
@@ -39,7 +50,7 @@ async handlePDFs(
   const answers: { file: string; answer: string }[] = [];
 
   for (const pdf of pdfs) {
-    const answer = await this.ragService.getAnswerFromPDF(prompt, pdf.path);
+    const answer = await this.ragService.getGeminiRagResponse(prompt);
     answers.push({ file: pdf.originalname, answer });
   }
 

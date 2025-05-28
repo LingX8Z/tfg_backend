@@ -8,6 +8,7 @@ import { ChatModule } from './geminis/chat/chat.module';
 import { ConfigModule } from '@nestjs/config';
 import { OllamaModule } from './ollama/ollama.module';
 import { ChathistoryModule } from './chathistory/chathistory.module';
+import { RagModule } from './rag/rag.module';
 
 @Module({
   imports: [AuthModule,
@@ -20,6 +21,7 @@ import { ChathistoryModule } from './chathistory/chathistory.module';
     ChatModule,
     OllamaModule,
     ChathistoryModule,
+    RagModule
   ],
   controllers: [AppController],
   providers: [AppService],

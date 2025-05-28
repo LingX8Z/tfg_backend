@@ -20,7 +20,4 @@ export class OllamaController {
     const response = await this.ollamaService.generateResponse(createOllamaDto.prompt, messages);
     return { response };
   }
-
-
-
 }

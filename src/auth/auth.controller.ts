@@ -74,11 +74,18 @@ export class AuthController {
 
 
   @UseGuards(JwtAuthGuard)
-  @Patch('cancel-subscription')
-  async cancelSubscription(@Req() req) {
-    const updatedUser = await this.authService.updateUserRole(req.user.userId, 'User');
-    return { user: updatedUser };
-  }
+@Patch('cancel-subscription')
+async cancelSubscription(@Req() req) {
+  const updatedUser = await this.authService.updateUserRole(req.user.userId, 'User');
+  return {
+    user: {
+      email: updatedUser!.email,
+      fullName: updatedUser!.fullName,
+      roles: updatedUser!.roles,
+    },
+  };
+}
+
 
 
   @UseGuards(JwtAuthGuard)
