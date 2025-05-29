@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { OllamaModule } from './ollama/ollama.module';
 import { ChathistoryModule } from './chathistory/chathistory.module';
 import { RagModule } from './rag/rag.module';
+import { ClinicalCaseModule } from './ClinicalCaseDocument/clinical-case.module';
 
 @Module({
   imports: [AuthModule,
@@ -21,7 +22,8 @@ import { RagModule } from './rag/rag.module';
     ChatModule,
     OllamaModule,
     ChathistoryModule,
-    RagModule
+    RagModule,
+    ClinicalCaseModule
   ],
   controllers: [AppController],
   providers: [AppService],
